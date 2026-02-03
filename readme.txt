@@ -3,7 +3,7 @@
 1. Work Completed:
    - analyzed existing backend (Express + MongoDB).
    - Created a complete Frontend using React (Vite).
-   - Implemented "Human Coded" Premium UI with custom CSS (no generic bootstrap/tailwind).
+   - Implemented with custom CSS (no generic bootstrap/tailwind).
    - Created Authentication Pages (Login, Signup).
    - Created Dashboard with visual complaints status.
    - Created "File Complaint" form.
