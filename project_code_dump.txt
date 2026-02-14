@@ -163,48 +163,51 @@ import FileComplaint from './pages/FileComplaint';
 import ManagerDashboard from './pages/ManagerDashboard';
 
 // Protected Route Wrapper
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
+const ProtectedRoute = ({ children, role }) => {
+  const token = localStorage.getItem("token");
+  const userRole = localStorage.getItem("role");
+
   if (!token) {
     return <Navigate to="/login" replace />;
   }
+
+  if (role && userRole !== role) {
+    return <Navigate to="/login" replace />;
+  }
+
   return children;
 };
+
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
 
+        <Route path="/login" element={<Login />} />
+
+        {/* User Dashboard */}
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="user">
               <Dashboard />
             </ProtectedRoute>
           }
         />
 
-        <Route
-          path="/file-complaint"
-          element={
-            <ProtectedRoute>
-              <FileComplaint />
-            </ProtectedRoute>
-          }
-        />
+        {/* Manager Dashboard */}
         <Route
           path="/manager"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="manager">
               <ManagerDashboard />
             </ProtectedRoute>
           }
         />
-      </Routes>
+
+</Routes>
+
     </Router>
   );
 }
@@ -597,6 +600,32 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
 --------------------------------------------------
 
+File Name: ProtectedRoute.jsx
+File Location: client\src\components\ProtectedRoute.jsx
+--------------------------------------------------
+import { Navigate } from "react-router-dom";
+
+const ProtectedRoute = ({ children, role }) => {
+  const token = localStorage.getItem("token");
+  const userRole = localStorage.getItem("role");
+
+  // If not logged in
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If role is required but doesn't match
+  if (role && userRole !== role) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+export default ProtectedRoute;
+
+--------------------------------------------------
+
 File Name: Dashboard.jsx
 File Location: client\src\pages\Dashboard.jsx
 --------------------------------------------------
@@ -666,13 +695,6 @@ const Dashboard = () => {
                             <div className="complaint-info">
                                 <h4>Cafeteria Hygiene</h4>
                                 <p>Submitted on: 05 Oct 2023</p>
-                            </div>
-                        </div>
-                        <div className="complaint-item">
-                            <div className="status-badge status-resolved">Pending</div>
-                            <div className="complaint-info">
-                                <h4>Gate closed</h4>
-                                <p>Submitted on: 05 nov 2023</p>
                             </div>
                         </div>
                     </div>
@@ -778,8 +800,16 @@ const Login = () => {
         e.preventDefault();
         try {
             const res = await api.post('/api/auth/login', { email, password });
-            localStorage.setItem('token', res.data.token);
-            navigate('/dashboard');
+            const { token, role } = res.data;
+
+            localStorage.setItem("token", token);
+            localStorage.setItem("role", role);
+
+            if (role === "manager") {
+            navigate("/manager");
+            } else {
+            navigate("/dashboard");
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
         }
@@ -936,14 +966,6 @@ const Signup = () => {
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Role</label>
-                        <select value={role} onChange={(e) => setRole(e.target.value)}>
-                            <option value="user">User</option>
-                            <option value="manager">Manager</option>
-                        </select>
-                    </div>
-
                     <button type="submit" className="btn-primary">Sign Up</button>
                 </form>
 
@@ -956,23 +978,6 @@ const Signup = () => {
 };
 
 export default Signup;
-
---------------------------------------------------
-
-File Name: api.js
-File Location: client\src\services\api.js
---------------------------------------------------
-
-import axios from 'axios';
-
-const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
-});
-
-export const signup = (userData) => API.post('/auth/signup', userData);
-export const login = (userData) => API.post('/auth/login', userData);
-
-export default API;
 
 --------------------------------------------------
 
@@ -1142,7 +1147,9 @@ router.post("/login", async (req, res) => {
     // response
     res.json({
       message: "Login successful",
-      token
+      token, 
+      role : user.role, 
+      email : user.email
     });
 
   } catch (error) {

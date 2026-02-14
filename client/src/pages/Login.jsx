@@ -12,8 +12,16 @@ const Login = () => {
         e.preventDefault();
         try {
             const res = await api.post('/api/auth/login', { email, password });
-            localStorage.setItem('token', res.data.token);
-            navigate('/dashboard');
+            const { token, role } = res.data;
+
+            localStorage.setItem("token", token);
+            localStorage.setItem("role", role);
+
+            if (role === "manager") {
+            navigate("/manager");
+            } else {
+            navigate("/dashboard");
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
         }

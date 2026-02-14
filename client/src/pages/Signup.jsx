@@ -50,14 +50,6 @@ const Signup = () => {
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Role</label>
-                        <select value={role} onChange={(e) => setRole(e.target.value)}>
-                            <option value="user">User</option>
-                            <option value="manager">Manager</option>
-                        </select>
-                    </div>
-
                     <button type="submit" className="btn-primary">Sign Up</button>
                 </form>
 

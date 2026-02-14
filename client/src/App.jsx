@@ -5,50 +5,38 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import FileComplaint from './pages/FileComplaint';
 import ManagerDashboard from './pages/ManagerDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Protected Route Wrapper
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
-
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
 
+        <Route path="/login" element={<Login />} />
+
+        {/* User Dashboard */}
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="user">
               <Dashboard />
             </ProtectedRoute>
           }
         />
 
-        <Route
-          path="/file-complaint"
-          element={
-            <ProtectedRoute>
-              <FileComplaint />
-            </ProtectedRoute>
-          }
-        />
+        {/* Manager Dashboard */}
         <Route
           path="/manager"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="manager">
               <ManagerDashboard />
             </ProtectedRoute>
           }
         />
-      </Routes>
+
+</Routes>
+
     </Router>
   );
 }
