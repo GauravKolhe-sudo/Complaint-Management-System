@@ -1,0 +1,1155 @@
+File Name: dump_code.py
+File Location: dump_code.py
+--------------------------------------------------
+
+import os
+
+project_root = r"g:\New folder\SGP\Complaint-Management-System"
+output_file = os.path.join(project_root, "project_code_dump.txt")
+
+extensions = ['.js', '.jsx', '.css', '.html', '.py', '.json', '.txt']
+exclude_dirs = ['node_modules', '.git', '.ipynb_checkpoints', 'dist', 'build', 'coverage', 'data', 'models']
+
+def is_excluded(path):
+    for excluded in exclude_dirs:
+        if excluded in path.split(os.sep):
+            return True
+    return False
+
+with open(output_file, 'w', encoding='utf-8') as f_out:
+    for root, dirs, files in os.walk(project_root):
+        if is_excluded(root):
+            continue
+            
+        for file in files:
+            if any(file.endswith(ext) for ext in extensions):
+                file_path = os.path.join(root, file)
+                
+                # Double check if file is excluded (e.g. package-lock.json if needed, but user might want it)
+                if file == 'package-lock.json': 
+                    continue # typically too large and not useful for invalidating logic
+                
+                relative_path = os.path.relpath(file_path, project_root)
+                
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f_in:
+                        content = f_in.read()
+                        
+                    f_out.write(f"File Name: {file}\n")
+                    f_out.write(f"File Location: {relative_path}\n")
+                    f_out.write("-" * 50 + "\n")
+                    f_out.write(content + "\n")
+                    f_out.write("-" * 50 + "\n\n")
+                    print(f"Processed: {relative_path}")
+                except Exception as e:
+                    print(f"Error reading {file_path}: {e}")
+
+print(f"Dump completed to {output_file}")
+
+--------------------------------------------------
+
+File Name: project_code_dump.txt
+File Location: project_code_dump.txt
+--------------------------------------------------
+
+--------------------------------------------------
+
+File Name: readme.txt
+File Location: readme.txt
+--------------------------------------------------
+ Complaint Management System - Work Report
+
+1. Work Completed:
+   - analyzed existing backend (Express + MongoDB).
+   - Created a complete Frontend using React (Vite).
+   - Implemented "Human Coded" Premium UI with custom CSS (no generic bootstrap/tailwind).
+   - Created Authentication Pages (Login, Signup).
+   - Created Dashboard with visual complaints status.
+   - Created "File Complaint" form.
+   - Configured API connection to Backend (localhost:5000).
+
+2. How to Run:
+   - Backend: Open terminal in 'server' folder and run `node server.js`
+   - Frontend: Open terminal in 'client' folder and run `npm run dev`
+
+3. Remaining Tasks (Future Scope):
+   - Backend "Complaint" routes are not yet fully implemented/verified (Mock data used in Dashboard).
+   - Connect "File Complaint" form to actual backend API endpoint (currently simulation).
+   - Add Admin specific dashboard views.
+
+The system is now ready for Login/Signup and visual walkthrough.
+
+--------------------------------------------------
+
+File Name: index.html
+File Location: client\index.html
+--------------------------------------------------
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Complaint Management System</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+
+--------------------------------------------------
+
+File Name: package.json
+File Location: client\package.json
+--------------------------------------------------
+{
+  "name": "client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.13.4",
+    "react-router-dom": "^7.13.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.3",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "vite": "^4.4.5"
+  }
+}
+
+--------------------------------------------------
+
+File Name: vite.config.js
+File Location: client\vite.config.js
+--------------------------------------------------
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+    plugins: [react()],
+    server: {
+        port: 5173,
+        host: true
+    }
+})
+
+--------------------------------------------------
+
+File Name: App.jsx
+File Location: client\src\App.jsx
+--------------------------------------------------
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import FileComplaint from './pages/FileComplaint';
+import ManagerDashboard from './pages/ManagerDashboard';
+
+// Protected Route Wrapper
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/file-complaint"
+          element={
+            <ProtectedRoute>
+              <FileComplaint />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manager"
+          element={
+            <ProtectedRoute>
+              <ManagerDashboard />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
+
+--------------------------------------------------
+
+File Name: index.css
+File Location: client\src\index.css
+--------------------------------------------------
+:root {
+  --bg-primary: #f8f9fc;
+  --bg-card: #ffffff;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --accent-color: #4f46e5;
+  --accent-hover: #4338ca;
+  --error-color: #ef4444;
+  --success-color: #10b981;
+  --border-radius: 12px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  text-decoration: none;
+  color: var(--accent-color);
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+/* Button Styles */
+.btn-primary, .btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 0.95rem;
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  color: white;
+  box-shadow: 0 4px 14px 0 rgba(79, 70, 229, 0.39);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background-color: #e5e7eb;
+}
+
+/* Auth Pages */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f0f2f5 0%, #e0e7ff 100%);
+}
+
+.auth-card {
+  background: var(--bg-card);
+  padding: 2.5rem;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.auth-card h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  color: #111827;
+}
+
+.auth-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+/* Form Elements */
+.form-group {
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #f9fafb;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  background: white;
+}
+
+.error-message {
+  background-color: #fef2f2;
+  color: var(--error-color);
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  border: 1px solid #fecaca;
+}
+
+.auth-footer {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* Dashboard Layout */
+.dashboard-layout {
+  min-height: 100vh;
+}
+
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: white;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--accent-color);
+  letter-spacing: -0.5px;
+}
+
+.dashboard-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  background: linear-gradient(to right, #4f46e5, #818cf8);
+  padding: 2rem 2.5rem;
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+}
+
+.hero-section h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.hero-section p {
+  color: #e0e7ff;
+}
+
+.hero-section .cta-btn {
+  background: white;
+  color: var(--accent-color);
+  box-shadow: none;
+}
+
+.hero-section .cta-btn:hover {
+  background: #f3f4f6;
+}
+
+/* Stats */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid #f3f4f6;
+}
+
+.stat-card h3 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.stat-card.pending { border-left: 4px solid #fbbf24; }
+.stat-card.resolved { border-left: 4px solid var(--success-color); }
+.stat-card.total { border-left: 4px solid var(--accent-color); }
+
+/* Complaints List */
+.recent-activity h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+}
+
+.complaint-item {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s;
+}
+
+.complaint-item:hover {
+  transform: translateX(4px);
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 1.5rem;
+  min-width: 80px;
+  text-align: center;
+}
+
+.status-pending { background: #fef3c7; color: #d97706; }
+.status-resolved { background: #d1fae5; color: #059669; }
+
+.complaint-info h4 {
+  font-size: 1rem;
+  margin-bottom: 0.2rem;
+}
+
+.complaint-info p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Page Container (File Complaint) */
+.page-container {
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.form-card-lg {
+  background: white;
+  padding: 3rem;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 700px;
+  box-shadow: var(--shadow-md);
+}
+
+.form-header {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 1rem;
+}
+
+.form-header h2 {
+  font-size: 1.75rem;
+  color: #111827;
+}
+
+.form-header p {
+  color: var(--text-secondary);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+--------------------------------------------------
+
+File Name: main.jsx
+File Location: client\src\main.jsx
+--------------------------------------------------
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './index.css';
+import { BrowserRouter } from 'react-router-dom';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+    this.setState({ error, errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: 'red' }}>
+          <h1>Something went wrong.</h1>
+          <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error && this.state.error.toString()}
+            <br />
+            {this.state.errorInfo && this.state.errorInfo.componentStack}
+          </details>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  </React.StrictMode>,
+);
+
+--------------------------------------------------
+
+File Name: Dashboard.jsx
+File Location: client\src\pages\Dashboard.jsx
+--------------------------------------------------
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../utils/api';
+
+const Dashboard = () => {
+    const navigate = useNavigate();
+    const [complaints, setComplaints] = useState([]);
+    // Mock data for visual if backend doesn't support fetching yet, 
+    // but plan implies connecting. I'll stick to a visual dashboard for now 
+    // as the backend routes for complaints weren't verified.
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/login');
+    };
+
+    return (
+        <div className="dashboard-layout">
+            <header className="top-nav">
+                <div className="logo">ComplaintSys</div>
+                <div className="nav-actions">
+                    <button onClick={handleLogout} className="btn-secondary">Logout</button>
+                </div>
+            </header>
+
+            <main className="dashboard-content">
+                <section className="hero-section">
+                    <h1>My Dashboard</h1>
+                    <p>Track and manage your submitted complaints.</p>
+
+                    <Link to="/file-complaint" className="btn-primary cta-btn">
+                        + File New Complaint
+                    </Link>
+                </section>
+
+                <section className="stats-row">
+                    <div className="stat-card pending">
+                        <h3>Pending</h3>
+                        <p className="stat-number">2</p>
+                    </div>
+                    <div className="stat-card resolved">
+                        <h3>Resolved</h3>
+                        <p className="stat-number">5</p>
+                    </div>
+                    <div className="stat-card total">
+                        <h3>Total</h3>
+                        <p className="stat-number">7</p>
+                    </div>
+                </section>
+
+                <section className="recent-activity">
+                    <h2>Recent Complaints</h2>
+                    <div className="complaint-list">
+                        {/* Static list for UI demo as requested "human coded UI" focus */}
+                        <div className="complaint-item">
+                            <div className="status-badge status-pending">Pending</div>
+                            <div className="complaint-info">
+                                <h4>Internet Connectivity Issue</h4>
+                                <p>Submitted on: 12 Oct 2023</p>
+                            </div>
+                        </div>
+                        <div className="complaint-item">
+                            <div className="status-badge status-resolved">Resolved</div>
+                            <div className="complaint-info">
+                                <h4>Cafeteria Hygiene</h4>
+                                <p>Submitted on: 05 Oct 2023</p>
+                            </div>
+                        </div>
+                        <div className="complaint-item">
+                            <div className="status-badge status-resolved">Pending</div>
+                            <div className="complaint-info">
+                                <h4>Gate closed</h4>
+                                <p>Submitted on: 05 nov 2023</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    );
+};
+
+export default Dashboard;
+
+--------------------------------------------------
+
+File Name: FileComplaint.jsx
+File Location: client\src\pages\FileComplaint.jsx
+--------------------------------------------------
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
+
+const FileComplaint = () => {
+    const navigate = useNavigate();
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [category, setCategory] = useState('General');
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        // Here we would call API. For now, UI demo.
+        alert("Complaint Submitted! (Demo)");
+        navigate('/dashboard');
+    };
+
+    return (
+        <div className="page-container">
+            <div className="form-card-lg">
+                <div className="form-header">
+                    <h2>File a Complaint</h2>
+                    <p>We are here to help. Please provide details below.</p>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>Subject</label>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Brief title of the issue"
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Category</label>
+                        <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                            <option>General</option>
+                            <option>IT Support</option>
+                            <option>Maintenance</option>
+                            <option>HR</option>
+                        </select>
+                    </div>
+
+                    <div className="form-group">
+                        <label>Description</label>
+                        <textarea
+                            rows="5"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Describe the issue in detail..."
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div className="form-actions">
+                        <button type="button" onClick={() => navigate('/dashboard')} className="btn-secondary">Cancel</button>
+                        <button type="submit" className="btn-primary">Submit Complaint</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default FileComplaint;
+
+--------------------------------------------------
+
+File Name: Login.jsx
+File Location: client\src\pages\Login.jsx
+--------------------------------------------------
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import api from '../utils/api';
+
+const Login = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const navigate = useNavigate();
+    const [error, setError] = useState('');
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await api.post('/api/auth/login', { email, password });
+            localStorage.setItem('token', res.data.token);
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Login failed');
+        }
+    };
+
+    return (
+        <div className="auth-container">
+            <div className="auth-card">
+                <h2>Welcome Back</h2>
+                <p className="auth-subtitle">Login to manage your complaints</p>
+
+                {error && <div className="error-message">{error}</div>}
+
+                <form onSubmit={handleLogin}>
+                    <div className="form-group">
+                        <label>Email Address</label>
+                        <input
+                            type="email"
+                            placeholder="Enter your email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Password</label>
+                        <input
+                            type="password"
+                            placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <button type="submit" className="btn-primary">Login</button>
+                </form>
+
+                <p className="auth-footer">
+                    Don't have an account? <Link to="/signup">Sign up</Link>
+                </p>
+            </div>
+        </div>
+    );
+};
+
+export default Login;
+
+--------------------------------------------------
+
+File Name: ManagerDashboard.jsx
+File Location: client\src\pages\ManagerDashboard.jsx
+--------------------------------------------------
+import React, { useState, useEffect } from 'react';
+import api from '../utils/api';
+
+const ManagerDashboard = () => {
+    // TODO: State for complaints
+    const [complaints, setComplaints] = useState([]);
+
+    // TODO: Fetch all complaints from backend
+    useEffect(() => {
+        // api.get('/manager/complaints')...
+        console.log("Fetching manager data...");
+    }, []);
+
+    const handleUpdateStatus = (id, status) => {
+        // TODO: Implement status update logic
+        console.log(`Update ${id} to ${status}`);
+    };
+
+    return (
+        <div className="page-container">
+            <div className="dashboard-header">
+                <h1>Manager Dashboard</h1>
+                <p>Welcome, Manager. Manage system complaints here.</p>
+            </div>
+
+            <div className="Manager-stats">
+                {/* Stats placeholders */}
+                <div className="stat-card">Total Complaints: 0</div>
+                <div className="stat-card">Pending: 0</div>
+            </div>
+
+            <div className="complaints-list-section">
+                <h3>All Complaints</h3>
+                {/* TODO: Add Table for complaints */}
+                <div className="placeholder-box">
+                    <p>Complaint list will be rendered here...</p>
+                    <p>Feature in progress.</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default ManagerDashboard;
+
+--------------------------------------------------
+
+File Name: Signup.jsx
+File Location: client\src\pages\Signup.jsx
+--------------------------------------------------
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import api from '../utils/api';
+
+const Signup = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [role, setRole] = useState('user');
+    const navigate = useNavigate();
+    const [error, setError] = useState('');
+
+    const handleSignup = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post('/api/auth/signup', { email, password, role });
+            navigate('/login');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Signup failed');
+        }
+    };
+
+    return (
+        <div className="auth-container">
+            <div className="auth-card">
+                <h2>Create Account</h2>
+                <p className="auth-subtitle">Join us to resolve your issues</p>
+
+                {error && <div className="error-message">{error}</div>}
+
+                <form onSubmit={handleSignup}>
+                    <div className="form-group">
+                        <label>Email Address</label>
+                        <input
+                            type="email"
+                            placeholder="Enter your email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Password</label>
+                        <input
+                            type="password"
+                            placeholder="Choose a password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Role</label>
+                        <select value={role} onChange={(e) => setRole(e.target.value)}>
+                            <option value="user">User</option>
+                            <option value="manager">Manager</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" className="btn-primary">Sign Up</button>
+                </form>
+
+                <p className="auth-footer">
+                    Already have an account? <Link to="/login">Login</Link>
+                </p>
+            </div>
+        </div>
+    );
+};
+
+export default Signup;
+
+--------------------------------------------------
+
+File Name: api.js
+File Location: client\src\services\api.js
+--------------------------------------------------
+
+import axios from 'axios';
+
+const API = axios.create({
+  baseURL: 'http://localhost:5000/api',
+});
+
+export const signup = (userData) => API.post('/auth/signup', userData);
+export const login = (userData) => API.post('/auth/login', userData);
+
+export default API;
+
+--------------------------------------------------
+
+File Name: api.js
+File Location: client\src\utils\api.js
+--------------------------------------------------
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:5000', // Server port
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export default api;
+
+--------------------------------------------------
+
+File Name: package.json
+File Location: server\package.json
+--------------------------------------------------
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.1.4"
+  }
+}
+
+--------------------------------------------------
+
+File Name: server.js
+File Location: server\server.js
+--------------------------------------------------
+const express = require("express");
+const cors = require("cors");
+const connectDB = require("./config/db");
+const authRoutes = require("./routes/authRoutes");
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+connectDB();
+
+app.use("/api/auth", authRoutes);
+
+app.get("/test", (req, res) => {
+  res.send("Server working");
+});
+
+app.listen(5000, () => {
+  console.log("Backend running on port 5000");
+});
+
+--------------------------------------------------
+
+File Name: db.js
+File Location: server\config\db.js
+--------------------------------------------------
+const mongoose = require("mongoose");
+
+const connectDB = async () => {
+    try {
+        await mongoose.connect("mongodb://localhost:27017/userDB");
+        console.log("MongoDB connected!!!");
+    } catch (error){
+        console.error("MongoDB connection failed : ", error.message);
+        process.exit(1);
+    }
+};
+
+module.exports = connectDB;
+--------------------------------------------------
+
+File Name: authMiddleware.js
+File Location: server\middleware\authMiddleware.js
+--------------------------------------------------
+
+--------------------------------------------------
+
+File Name: authRoutes.js
+File Location: server\routes\authRoutes.js
+--------------------------------------------------
+const express = require("express");
+const router = express.Router();
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+
+router.post("/signup", async (req, res) => {
+  try {
+    const { email, password, role } = req.body;
+
+    if (!email || !password || !role) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      email,
+      password: hashedPassword,
+      role
+    });
+
+    await newUser.save();
+
+    res.status(201).json({ message: "Signup successful" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // validation
+    if (!email || !password) {
+      return res.status(400).json({ message: "All fields required" });
+    }
+
+    // find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // create token (NO password inside)
+    const token = jwt.sign(
+      { userId: user._id },
+      "SECRET_KEY",
+      { expiresIn: "1h" }
+    );
+
+    // response
+    res.json({
+      message: "Login successful",
+      token
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+module.exports = router;
+--------------------------------------------------
+

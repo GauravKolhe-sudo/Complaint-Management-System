@@ -66,6 +66,13 @@ const Dashboard = () => {
                                 <p>Submitted on: 05 Oct 2023</p>
                             </div>
                         </div>
+                        <div className="complaint-item">
+                            <div className="status-badge status-resolved">Pending</div>
+                            <div className="complaint-info">
+                                <h4>Gate closed</h4>
+                                <p>Submitted on: 05 nov 2023</p>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </main>

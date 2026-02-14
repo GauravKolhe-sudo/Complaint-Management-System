@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import FileComplaint from './pages/FileComplaint';
+import ManagerDashboard from './pages/ManagerDashboard';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -36,6 +37,14 @@ function App() {
           element={
             <ProtectedRoute>
               <FileComplaint />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manager"
+          element={
+            <ProtectedRoute>
+              <ManagerDashboard />
             </ProtectedRoute>
           }
         />
