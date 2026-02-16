@@ -5,12 +5,32 @@ import api from '../utils/api';
 const Dashboard = () => {
     const navigate = useNavigate();
     const [complaints, setComplaints] = useState([]);
-    // Mock data for visual if backend doesn't support fetching yet, 
-    // but plan implies connecting. I'll stick to a visual dashboard for now 
-    // as the backend routes for complaints weren't verified.
+    const userEmail = localStorage.getItem("email");
+
+    useEffect(() => {
+        const fetchComplaints = async () => {
+            if (!userEmail) {
+                // If email is missing, user might have old session. specific check.
+                // Redirect to login to refresh session data.
+                navigate('/login');
+                return;
+            }
+
+            try {
+                const res = await api.get(`/api/complaint/user?email=${userEmail}`);
+                setComplaints(res.data);
+            } catch (err) {
+                console.error("Error fetching complaints:", err);
+            }
+        };
+
+        fetchComplaints();
+    }, [userEmail, navigate]);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        localStorage.removeItem('email');
         navigate('/login');
     };
 
@@ -36,36 +56,43 @@ const Dashboard = () => {
                 <section className="stats-row">
                     <div className="stat-card pending">
                         <h3>Pending</h3>
-                        <p className="stat-number">2</p>
+                        <p className="stat-number">
+                            {complaints.filter(c => c.status === 'Pending').length}
+                        </p>
                     </div>
                     <div className="stat-card resolved">
                         <h3>Resolved</h3>
-                        <p className="stat-number">5</p>
+                        <p className="stat-number">
+                            {complaints.filter(c => c.status === 'Completed').length}
+                        </p>
                     </div>
                     <div className="stat-card total">
                         <h3>Total</h3>
-                        <p className="stat-number">7</p>
+                        <p className="stat-number">{complaints.length}</p>
                     </div>
                 </section>
 
                 <section className="recent-activity">
                     <h2>Recent Complaints</h2>
                     <div className="complaint-list">
-                        {/* Static list for UI demo as requested "human coded UI" focus */}
-                        <div className="complaint-item">
-                            <div className="status-badge status-pending">Pending</div>
-                            <div className="complaint-info">
-                                <h4>Internet Connectivity Issue</h4>
-                                <p>Submitted on: 12 Oct 2023</p>
-                            </div>
-                        </div>
-                        <div className="complaint-item">
-                            <div className="status-badge status-resolved">Resolved</div>
-                            <div className="complaint-info">
-                                <h4>Cafeteria Hygiene</h4>
-                                <p>Submitted on: 05 Oct 2023</p>
-                            </div>
-                        </div>
+                        {complaints.length === 0 ? (
+                            <p>No complaints found.</p>
+                        ) : (
+                            complaints.map((complaint) => (
+                                <div key={complaint._id} className="complaint-item">
+                                    <div className={`status-badge status-${(complaint.status || 'Pending').toLowerCase()}`}>
+                                        {complaint.status || 'Pending'}
+                                    </div>
+                                    <div className="complaint-info">
+                                        <h4>{complaint.title || 'Untitled Complaint'}</h4>
+                                        <p>Category: {complaint.category || 'General'}</p>
+                                        <p>Submitted on: {new Date(complaint.createdAt).toLocaleDateString()}</p>
+                                        {/* Debug helper: show text if title missing */}
+                                        {!complaint.title && <p className="text-sm text-gray-500">{complaint.text?.substring(0, 50)}...</p>}
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </section>
             </main>

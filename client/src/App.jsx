@@ -12,8 +12,9 @@ function App() {
   return (
     <Router>
       <Routes>
-
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
 
         {/* User Dashboard */}
         <Route
@@ -21,6 +22,15 @@ function App() {
           element={
             <ProtectedRoute role="user">
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/file-complaint"
+          element={
+            <ProtectedRoute role="user">
+              <FileComplaint />
             </ProtectedRoute>
           }
         />
@@ -35,8 +45,10 @@ function App() {
           }
         />
 
-</Routes>
+        {/* Catch all route */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
 
+      </Routes>
     </Router>
   );
 }

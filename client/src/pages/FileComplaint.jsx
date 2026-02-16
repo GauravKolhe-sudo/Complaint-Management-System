@@ -8,11 +8,29 @@ const FileComplaint = () => {
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('General');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Here we would call API. For now, UI demo.
-        alert("Complaint Submitted! (Demo)");
-        navigate('/dashboard');
+        const userEmail = localStorage.getItem("email");
+
+        if (!userEmail) {
+            alert("Please login again.");
+            navigate('/login');
+            return;
+        }
+
+        try {
+            await api.post('/api/complaint/add', {
+                userEmail,
+                title,
+                category,
+                text: description
+            });
+            alert("Complaint Submitted!");
+            navigate('/dashboard');
+        } catch (err) {
+            console.error(err);
+            alert("Failed to submit complaint.");
+        }
     };
 
     return (

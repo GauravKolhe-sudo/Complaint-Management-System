@@ -16,11 +16,12 @@ const Login = () => {
 
             localStorage.setItem("token", token);
             localStorage.setItem("role", role);
+            localStorage.setItem("email", res.data.email);
 
             if (role === "manager") {
-            navigate("/manager");
+                navigate("/manager");
             } else {
-            navigate("/dashboard");
+                navigate("/dashboard");
             }
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
