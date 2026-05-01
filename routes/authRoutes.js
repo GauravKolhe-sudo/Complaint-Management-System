@@ -6,9 +6,9 @@ const User = require("../models/User");
 
 router.post("/signup", async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
 
-    if (!email || !password || !role) {
+    if (!email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -23,7 +23,7 @@ router.post("/signup", async (req, res) => {
     const newUser = new User({
       email,
       password: hashedPassword,
-      role
+      role: "user" // Default role
     });
 
     await newUser.save();
@@ -40,39 +40,37 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // validation
     if (!email || !password) {
       return res.status(400).json({ message: "All fields required" });
     }
 
-    // find user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // create token (NO password inside)
     const token = jwt.sign(
-      { userId: user._id },
+      { userId: user._id, role: user.role },
       "SECRET_KEY",
       { expiresIn: "1h" }
     );
 
-    // response
     res.json({
       message: "Login successful",
-      token
+      token,
+      role: user.role,
+      email: user.email
     });
 
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 module.exports = router;

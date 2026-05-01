@@ -4,61 +4,119 @@ import api from '../utils/api';
 
 const FileComplaint = () => {
     const navigate = useNavigate();
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [category, setCategory] = useState('General');
+    const [form, setForm] = useState({ subject: '', contactNumber: '', description: '', location: '' });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Here we would call API. For now, UI demo.
-        alert("Complaint Submitted! (Demo)");
-        navigate('/dashboard');
+        setError('');
+        setLoading(true);
+        try {
+            await api.post('/api/complaints/submit', form);
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to submit complaint. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const inputStyle = {
+        width: '100%', padding: '0.75rem 1rem', borderRadius: '10px',
+        border: '1px solid #e5e7eb', backgroundColor: '#f9fafb',
+        fontSize: '0.95rem', boxSizing: 'border-box', outline: 'none'
+    };
+    const labelStyle = {
+        display: 'block', fontSize: '0.7rem', fontWeight: '700',
+        color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem'
     };
 
     return (
-        <div className="page-container">
-            <div className="form-card-lg">
-                <div className="form-header">
-                    <h2>File a Complaint</h2>
-                    <p>We are here to help. Please provide details below.</p>
-                </div>
+        <div style={{ backgroundColor: '#f3f4f6', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+            <div style={{ background: 'white', padding: '2.5rem', borderRadius: '20px', boxShadow: '0 4px 24px rgba(0,0,0,0.07)', width: '100%', maxWidth: '620px' }}>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', textAlign: 'center', marginBottom: '0.4rem', color: '#111827' }}>File a Complaint</h2>
+                <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '2rem', fontSize: '0.95rem' }}>We are here to help. Please provide details below.</p>
+
+                {error && (
+                    <div style={{ backgroundColor: '#fef2f2', color: '#ef4444', padding: '0.75rem', borderRadius: '10px', marginBottom: '1.5rem', fontSize: '0.85rem', textAlign: 'center', border: '1px solid #fee2e2' }}>
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Subject</label>
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Brief title of the issue"
+                    {/* Row 1: Subject + Contact Number */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+                        <div>
+                            <label style={labelStyle}>Subject</label>
+                            <input
+                                name="subject"
+                                type="text"
+                                placeholder="Brief title of the issue"
+                                value={form.subject}
+                                onChange={handleChange}
+                                style={inputStyle}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>Contact Number</label>
+                            <input
+                                name="contactNumber"
+                                type="tel"
+                                placeholder="Your mobile number"
+                                value={form.contactNumber}
+                                onChange={handleChange}
+                                style={inputStyle}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Row 2: Description */}
+                    <div style={{ marginBottom: '1.25rem' }}>
+                        <label style={labelStyle}>Description</label>
+                        <textarea
+                            name="description"
+                            rows="5"
+                            placeholder="Describe the issue in detail..."
+                            value={form.description}
+                            onChange={handleChange}
+                            style={{ ...inputStyle, resize: 'vertical' }}
                             required
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Category</label>
-                        <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                            <option>General</option>
-                            <option>IT Support</option>
-                            <option>Maintenance</option>
-                            <option>HR</option>
-                        </select>
+                    {/* Row 3: Location */}
+                    <div style={{ marginBottom: '2rem' }}>
+                        <label style={labelStyle}>Complaint Location</label>
+                        <input
+                            name="location"
+                            type="text"
+                            placeholder="Address or area of the issue"
+                            value={form.location}
+                            onChange={handleChange}
+                            style={inputStyle}
+                        />
                     </div>
 
-                    <div className="form-group">
-                        <label>Description</label>
-                        <textarea
-                            rows="5"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Describe the issue in detail..."
-                            required
-                        ></textarea>
-                    </div>
-
-                    <div className="form-actions">
-                        <button type="button" onClick={() => navigate('/dashboard')} className="btn-secondary">Cancel</button>
-                        <button type="submit" className="btn-primary">Submit Complaint</button>
+                    {/* Actions */}
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/dashboard')}
+                            style={{ flex: 1, padding: '0.85rem', borderRadius: '10px', border: '1px solid #e5e7eb', background: 'white', fontWeight: '600', cursor: 'pointer', fontSize: '0.95rem' }}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            style={{ flex: 2, padding: '0.85rem', borderRadius: '10px', border: 'none', backgroundColor: loading ? '#a5b4fc' : '#4f46e5', color: 'white', fontWeight: '700', fontSize: '0.95rem', cursor: loading ? 'not-allowed' : 'pointer' }}
+                        >
+                            {loading ? 'Submitting...' : 'Submit Complaint'}
+                        </button>
                     </div>
                 </form>
             </div>
